@@ -1,0 +1,171 @@
+-- BY 名字
+-- 仍然有些bug
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+local camera = Workspace.CurrentCamera
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+local playerBars = {}
+
+local function createHealthBarForPlayer(targetPlayer)
+    local healthBar = Instance.new("Frame")
+    healthBar.Size = UDim2.new(0, 100, 0, 10)
+    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    healthBar.BorderSizePixel = 0
+    healthBar.Parent = screenGui
+
+    local function updateHealthBar()
+        local humanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            local healthPercentage = humanoid.Health / humanoid.MaxHealth
+            healthBar.Size = UDim2.new(0, 100 * healthPercentage, 0, 10)
+            if humanoid.Health <= 0 then
+                healthBar:Destroy()
+                playerBars[targetPlayer] = nil
+            end
+        end
+    end
+
+    updateHealthBar()
+
+    local humanoid = targetPlayer.Character:WaitForChild("Humanoid")
+    humanoid.HealthChanged:Connect(updateHealthBar)
+
+    playerBars[targetPlayer] = healthBar
+end
+
+local function updateBars()
+    for _, targetPlayer in pairs(Players:GetPlayers()) do
+        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+            if not playerBars[targetPlayer] then
+                createHealthBarForPlayer(targetPlayer)
+            end
+
+            local healthBar = playerBars[targetPlayer]
+            local humanoidRootPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local screenPos, onScreen = camera:WorldToScreenPoint(humanoidRootPart.Position + Vector3.new(0, 5, 0))
+
+                if onScreen then
+                    healthBar.Position = UDim2.new(0, screenPos.X - healthBar.Size.X.Offset / 2, 0, screenPos.Y - healthBar.Size.Y.Offset - 10)
+                    healthBar.Visible = true
+                else
+                    healthBar.Visible = false
+                end
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(targetPlayer)
+    targetPlayer.CharacterAdded:Connect(function()
+        if not playerBars[targetPlayer] then
+            createHealthBarForPlayer(targetPlayer)
+        end
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(targetPlayer)
+    if playerBars[targetPlayer] then
+        playerBars[targetPlayer]:Destroy()
+        playerBars[targetPlayer] = nil
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(updateBars)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+
+local playerCountLabel = Instance.new("TextLabel")
+playerCountLabel.Size = UDim2.new(0, 200, 0, 50)
+playerCountLabel.Position = UDim2.new(0.5, -100, 0, 10) 
+playerCountLabel.BackgroundTransparency = 1
+playerCountLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+playerCountLabel.TextScaled = true
+playerCountLabel.Text = "玩家数量: " .. #Players:GetPlayers()
+playerCountLabel.Parent = screenGui
+
+
+Players.PlayerAdded:Connect(function()
+    playerCountLabel.Text = "玩家数量: " .. #Players:GetPlayers()
+end)
+
+Players.PlayerRemoving:Connect(function()
+    playerCountLabel.Text = "玩家数量: " .. #Players:GetPlayers()
+end)
+
+
+local function createPlayerBorders(player)
+    
+    local character = player.Character
+    if not character then return end
+    
+    
+    local head = character:WaitForChild("Head")
+    local torso = character:WaitForChild("UpperTorso") or character:WaitForChild("Torso")
+    local leftArm = character:WaitForChild("LeftArm")
+    local rightArm = character:WaitForChild("RightArm")
+    local leftLeg = character:WaitForChild("LeftLeg")
+    local rightLeg = character:WaitForChild("RightLeg")
+    
+
+    local function createBorder(part)
+        local borderFrame = Instance.new("Frame")
+        borderFrame.Size = UDim2.new(0, 100, 0, 100)  
+        borderFrame.BackgroundTransparency = 0.5
+        borderFrame.BorderSizePixel = 2
+        borderFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) 
+        borderFrame.Parent = screenGui
+        
+        
+        RunService.RenderStepped:Connect(function()
+            if part and part.Parent then
+                local screenPos = workspace.CurrentCamera:WorldToScreenPoint(part.Position)
+                borderFrame.Position = UDim2.new(0, screenPos.X - 50, 0, screenPos.Y - 50)
+                borderFrame.Size = UDim2.new(0, 100, 0, 100) 
+            else
+                borderFrame:Destroy()  
+            end
+        end)
+    end
+    
+
+    createBorder(head)
+    createBorder(torso)
+    createBorder(leftArm)
+    createBorder(rightArm)
+    createBorder(leftLeg)
+    createBorder(rightLeg)
+end
+
+
+for _, player in pairs(Players:GetPlayers()) do
+    if player.Character then
+        createPlayerBorders(player)
+    end
+
+
+    player.CharacterAdded:Connect(function(character)
+        createPlayerBorders(player)
+    end)
+end
+
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        createPlayerBorders(player)
+    end)
+end)
+
+
+Players.PlayerRemoving:Connect(function(player)
+end)
