@@ -1,0 +1,301 @@
+-- BETA
+-- 创建 ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PopupGui"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- 创建弹出框
+local popupFrame = Instance.new("Frame")
+popupFrame.Size = UDim2.new(0.5, 0, 0.3, 0)
+popupFrame.Position = UDim2.new(0.25, 0, 0.35, 0)
+popupFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+popupFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+popupFrame.BorderSizePixel = 0
+popupFrame.BackgroundTransparency = 0.1
+popupFrame.Parent = screenGui
+
+-- 添加圆角效果
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0.05, 0)
+corner.Parent = popupFrame
+
+-- 添加阴影效果
+local shadow = Instance.new("Frame")
+shadow.Size = UDim2.new(1, 8, 1, 8)
+shadow.Position = UDim2.new(0, -4, 0, -4)
+shadow.BackgroundColor3 = Color3.new(0, 0, 0)
+shadow.BackgroundTransparency = 0.5
+shadow.ZIndex = 0
+shadow.Parent = popupFrame
+
+local shadowCorner = Instance.new("UICorner")
+shadowCorner.CornerRadius = UDim.new(0.05, 0)
+shadowCorner.Parent = shadow
+
+-- 添加提示文本
+local label = Instance.new("TextLabel")
+label.Text = "Hello World"
+label.Size = UDim2.new(1, -20, 0.6, 0)
+label.Position = UDim2.new(0.5, 0, 0.2, 0)
+label.AnchorPoint = Vector2.new(0.5, 0)
+label.TextScaled = true
+label.TextColor3 = Color3.new(0, 0, 0)
+label.BackgroundTransparency = 1
+label.Font = Enum.Font.Gotham
+label.Parent = popupFrame
+
+-- 添加按钮
+local button = Instance.new("TextButton")
+button.Text = "同意"
+button.Size = UDim2.new(0.4, 0, 0.25, 0)
+button.Position = UDim2.new(0.5, 0, 0.75, 0)
+button.AnchorPoint = Vector2.new(0.5, 0.5)
+button.TextScaled = true
+button.TextColor3 = Color3.new(1, 1, 1)
+button.BackgroundColor3 = Color3.new(0.2, 0.6, 0.8)
+button.Font = Enum.Font.Gotham
+button.Parent = popupFrame
+
+-- 按钮的圆角效果
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0.1, 0)
+buttonCorner.Parent = button
+
+-- 按钮的点击效果
+button.MouseButton1Click:Connect(function()
+    -- 动画：向上划走
+    popupFrame:TweenPosition(
+        UDim2.new(0.25, 0, -0.5, 0), -- 目标位置
+        Enum.EasingDirection.Out, 
+        Enum.EasingStyle.Quad, 
+        0.5, -- 动画时长
+        true
+    )
+
+    -- 等待 3 秒后销毁 GUI
+    wait(3)
+    screenGui:Destroy()
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+local camera = Workspace.CurrentCamera
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+local playerBars = {}
+
+local function createHealthBarForPlayer(targetPlayer)
+    local healthBar = Instance.new("Frame")
+    healthBar.Size = UDim2.new(0, 100, 0, 10)
+    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    healthBar.BorderSizePixel = 0
+    healthBar.Parent = screenGui
+
+    local function updateHealthBar()
+        local humanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            local healthPercentage = humanoid.Health / humanoid.MaxHealth
+            healthBar.Size = UDim2.new(0, 100 * healthPercentage, 0, 10)
+            if humanoid.Health <= 0 then
+                healthBar:Destroy()
+                playerBars[targetPlayer] = nil
+            end
+        end
+    end
+
+    updateHealthBar()
+
+    local humanoid = targetPlayer.Character:WaitForChild("Humanoid")
+    humanoid.HealthChanged:Connect(updateHealthBar)
+
+    playerBars[targetPlayer] = healthBar
+end
+
+local function updateBars()
+    for _, targetPlayer in pairs(Players:GetPlayers()) do
+        if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+            if not playerBars[targetPlayer] then
+                createHealthBarForPlayer(targetPlayer)
+            end
+
+            local healthBar = playerBars[targetPlayer]
+            local humanoidRootPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local screenPos, onScreen = camera:WorldToScreenPoint(humanoidRootPart.Position + Vector3.new(0, 5, 0))
+
+                if onScreen then
+                    healthBar.Position = UDim2.new(0, screenPos.X - healthBar.Size.X.Offset / 2, 0, screenPos.Y - healthBar.Size.Y.Offset - 10)
+                    healthBar.Visible = true
+                else
+                    healthBar.Visible = false
+                end
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(targetPlayer)
+    targetPlayer.CharacterAdded:Connect(function()
+        if not playerBars[targetPlayer] then
+            createHealthBarForPlayer(targetPlayer)
+        end
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(targetPlayer)
+    if playerBars[targetPlayer] then
+        playerBars[targetPlayer]:Destroy()
+        playerBars[targetPlayer] = nil
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(updateBars)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+
+local playerCountLabel = Instance.new("TextLabel")
+playerCountLabel.Size = UDim2.new(0, 200, 0, 50)
+playerCountLabel.Position = UDim2.new(0.5, -100, 0, 10) 
+playerCountLabel.BackgroundTransparency = 1
+playerCountLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+playerCountLabel.TextScaled = true
+playerCountLabel.Text = "玩家数量: " .. #Players:GetPlayers()
+playerCountLabel.Parent = screenGui
+
+
+Players.PlayerAdded:Connect(function()
+    playerCountLabel.Text = "玩家数量: " .. #Players:GetPlayers()
+end)
+
+Players.PlayerRemoving:Connect(function()
+    playerCountLabel.Text = "玩家数量: " .. #Players:GetPlayers()
+end)
+
+
+local function createPlayerBorders(player)
+    
+    local character = player.Character
+    if not character then return end
+    
+    
+    local head = character:WaitForChild("Head")
+    local torso = character:WaitForChild("UpperTorso") or character:WaitForChild("Torso")
+    local leftArm = character:WaitForChild("LeftArm")
+    local rightArm = character:WaitForChild("RightArm")
+    local leftLeg = character:WaitForChild("LeftLeg")
+    local rightLeg = character:WaitForChild("RightLeg")
+    
+
+    local function createBorder(part)
+        local borderFrame = Instance.new("Frame")
+        borderFrame.Size = UDim2.new(0, 100, 0, 100)  
+        borderFrame.BackgroundTransparency = 0.5
+        borderFrame.BorderSizePixel = 2
+        borderFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) 
+        borderFrame.Parent = screenGui
+        
+        
+        RunService.RenderStepped:Connect(function()
+            if part and part.Parent then
+                local screenPos = workspace.CurrentCamera:WorldToScreenPoint(part.Position)
+                borderFrame.Position = UDim2.new(0, screenPos.X - 50, 0, screenPos.Y - 50)
+                borderFrame.Size = UDim2.new(0, 100, 0, 100) 
+            else
+                borderFrame:Destroy()  
+            end
+        end)
+    end
+    
+
+    createBorder(head)
+    createBorder(torso)
+    createBorder(leftArm)
+    createBorder(rightArm)
+    createBorder(leftLeg)
+    createBorder(rightLeg)
+end
+
+
+for _, player in pairs(Players:GetPlayers()) do
+    if player.Character then
+        createPlayerBorders(player)
+    end
+
+
+    player.CharacterAdded:Connect(function(character)
+        createPlayerBorders(player)
+    end)
+end
+
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        createPlayerBorders(player)
+    end)
+end)
+
+
+Players.PlayerRemoving:Connect(function(player)
+end)
+local player = game.Players.LocalPlayer
+local camera = game.Workspace.CurrentCamera
+
+local function createLine()
+    local line = Instance.new("Part")
+    line.Anchored = true
+    line.CanCollide = false
+    line.Material = Enum.Material.Neon
+    line.Transparency = 0.5
+    line.Color = Color3.new(1, 0, 0)
+    line.Size = Vector3.new(0.05, 0.05, 1)
+    line.Parent = game.Workspace
+    return line
+end
+
+local lines = {}
+
+game.Players.PlayerRemoving:Connect(function(leavingPlayer)
+    if lines[leavingPlayer] then
+        lines[leavingPlayer]:Destroy()
+        lines[leavingPlayer] = nil
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("Head") then
+            local targetHead = otherPlayer.Character.Head
+            local headPosition = targetHead.Position
+            local cameraPosition = camera.CFrame.Position
+
+            local screenPoint, onScreen = camera:WorldToViewportPoint(headPosition)
+            if onScreen and screenPoint.Z > 0 then
+                local line = lines[otherPlayer] or createLine()
+                lines[otherPlayer] = line
+
+                local midPoint = (cameraPosition + headPosition) / 2
+                local distance = (cameraPosition - headPosition).Magnitude
+                line.Size = Vector3.new(0.05, 0.05, distance)
+                line.CFrame = CFrame.new(midPoint, headPosition) * CFrame.Angles(math.pi / 2, 0, 0)
+
+                line.Transparency = 0
+            else
+                if lines[otherPlayer] then
+                    lines[otherPlayer].Transparency = 1
+                end
+            end
+        elseif lines[otherPlayer] then
+            lines[otherPlayer]:Destroy()
+            lines[otherPlayer] = nil
+        end
+    end
+end)
+end)
